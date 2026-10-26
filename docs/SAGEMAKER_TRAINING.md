@@ -186,7 +186,7 @@ A dry run displays the exact `CreateTrainingJob` request without calling SageMak
 **GR00T:**
 
 ```bash
-.venv/bin/python scripts/jobs/sagemaker/launch_training.py \
+AWS_PROFILE=datascience .venv/bin/python scripts/jobs/sagemaker/launch_training.py \
   --model-type groot \
   --dataset-repo-id ORG/GROOT_DATASET \
   --hf-token hf_YOUR_TOKEN \
@@ -200,7 +200,7 @@ A dry run displays the exact `CreateTrainingJob` request without calling SageMak
 **SmolVLA:**
 
 ```bash
-.venv/bin/python scripts/jobs/sagemaker/launch_training.py \
+AWS_PROFILE=datascience .venv/bin/python scripts/jobs/sagemaker/launch_training.py \
   --model-type smolvla \
   --dataset-repo-id ORG/SMOLVLA_DATASET \
   --hf-token hf_YOUR_TOKEN \
@@ -231,28 +231,54 @@ For example:
 **GR00T:**
 
 ```bash
-.venv/bin/python scripts/jobs/sagemaker/launch_training.py \
+AWS_PROFILE=datascience .venv/bin/python scripts/jobs/sagemaker/launch_training.py \
   --model-type groot \
   --dataset-repo-id ORG/GROOT_DATASET \
+  --hf-token hf_YOUR_TOKEN \
   --hf-policy-repo ORG/MODEL_NAME \
   --steps 10000 \
-  --batch-size 2
-# --hf-token and --hf-policy-repo will be prompted if not set.
+  --batch-size 2 \
+  --save-freq 5000
 ```
 
 **SmolVLA:**
 
 ```bash
-.venv/bin/python scripts/jobs/sagemaker/launch_training.py \
+AWS_PROFILE=datascience .venv/bin/python scripts/jobs/sagemaker/launch_training.py \
   --model-type smolvla \
   --dataset-repo-id ORG/SMOLVLA_DATASET \
+  --hf-token hf_YOUR_TOKEN \
   --hf-policy-repo ORG/MODEL_NAME \
   --steps 10000 \
-  --batch-size 2
-# --hf-token and --hf-policy-repo will be prompted if not set.
+  --batch-size 2 \
+  --save-freq 2000
+# --hf-token will be prompted if not set.
 ```
 
 The launcher prints the job name and ARN after AWS accepts the request. **Submitting a job does not mean training has succeeded.** Inspect SageMaker job status and CloudWatch logs, and review errors if the container exits.
+
+**Check job status** (replace `JOB_NAME` with the name printed by the launcher):
+
+```bash
+aws sagemaker describe-training-job \
+  --training-job-name JOB_NAME \
+  --profile datascience \
+  --region eu-north-1 \
+  --query 'TrainingJobStatus' \
+  --output text
+```
+
+**Stream live logs:**
+
+```bash
+aws logs tail /aws/sagemaker/TrainingJobs \
+  --log-stream-name-prefix JOB_NAME \
+  --follow \
+  --profile datascience \
+  --region eu-north-1
+```
+
+Status values: `InProgress` — running, `Completed` — success, `Failed` — check logs for error.
 
 ## 11. Checkpoints and final artifacts
 
