@@ -169,15 +169,18 @@ docker push "$REGISTRY/robotics-smolvla:v1"
 
 If your organization already maintains approved ECR repositories, use those and pass their full image URI through `--ecr-image` instead of creating new repositories.
 
-Verify that the tag exists:
+List all available image tags:
 
 ```bash
-aws ecr describe-images --repository-name robotics-groot --image-ids imageTag=v1 \
-  --profile "$PROFILE" --region "$REGION"
+aws ecr list-images --repository-name robotics-groot \
+  --profile "$PROFILE" --region "$REGION" \
+  --query 'imageIds[*].imageTag' --output text
 
-aws ecr describe-images --repository-name robotics-smolvla --image-ids imageTag=v1 \
-  --profile "$PROFILE" --region "$REGION"
+aws ecr list-images --repository-name robotics-smolvla \
+  --profile "$PROFILE" --region "$REGION" \
+  --query 'imageIds[*].imageTag' --output text
 ```
+
 
 ## 9. Dry-run the SageMaker job configuration
 
@@ -194,6 +197,7 @@ AWS_PROFILE=datascience .venv/bin/python scripts/jobs/sagemaker/launch_training.
   --steps 10000 \
   --batch-size 2 \
   --save-freq 5000 \
+  --image-tag v1 \
   --dry-run
 ```
 
@@ -207,11 +211,14 @@ AWS_PROFILE=datascience .venv/bin/python scripts/jobs/sagemaker/launch_training.
   --hf-policy-repo ORG/MODEL_NAME \
   --steps 10000 \
   --batch-size 2 \
-  --save-freq 2000 \
+  --save-freq 5000 \
+  --image-tag v4 \
   --dry-run
 ```
 
 If `--dataset-repo-id`, `--hf-token`, or `--hf-policy-repo` are omitted, the launcher will prompt for them interactively. The token prompt uses silent input (no echo). You can also pre-set the token as the `HF_TOKEN` environment variable.
+
+Always use the latest image tag. Current versions: GR00T `v1`, SmolVLA `v4`. When a new Docker image is built and pushed, increment the tag (v5, v6, etc.) and update `--image-tag` accordingly.
 
 If using a different approved ECR image, add `--ecr-image FULL_ECR_URI`. For a different AWS account or role, add `--aws-account-id`, `--role-arn`, `--aws-profile`, `--aws-region`, and `--s3-bucket` as required.
 
@@ -238,7 +245,8 @@ AWS_PROFILE=datascience .venv/bin/python scripts/jobs/sagemaker/launch_training.
   --hf-policy-repo ORG/MODEL_NAME \
   --steps 10000 \
   --batch-size 2 \
-  --save-freq 5000
+  --save-freq 5000 \
+  --image-tag v1
 ```
 
 **SmolVLA:**
@@ -251,8 +259,8 @@ AWS_PROFILE=datascience .venv/bin/python scripts/jobs/sagemaker/launch_training.
   --hf-policy-repo ORG/MODEL_NAME \
   --steps 10000 \
   --batch-size 2 \
-  --save-freq 2000
-# --hf-token will be prompted if not set.
+  --save-freq 5000 \
+  --image-tag v4
 ```
 
 The launcher prints the job name and ARN after AWS accepts the request. **Submitting a job does not mean training has succeeded.** Inspect SageMaker job status and CloudWatch logs, and review errors if the container exits.
