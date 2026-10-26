@@ -11,6 +11,7 @@ OUTPUT_DIR="${OUTPUT_DIR:-/opt/ml/checkpoints/output}"
 HF_POLICY_REPO="${HF_POLICY_REPO:-}"
 PUSH_TO_HUB="${PUSH_TO_HUB:-true}"
 HF_TOKEN="${HF_TOKEN:-}"
+RENAME_MAP="${RENAME_MAP:-}"
 
 if [[ -n "${HF_TOKEN}" ]]; then
     export HUGGING_FACE_HUB_TOKEN="${HF_TOKEN}"
@@ -28,6 +29,10 @@ ARGS=(
 
 if [[ -n "${HF_POLICY_REPO}" ]]; then
     ARGS+=("--policy.repo_id=${HF_POLICY_REPO}")
+fi
+
+if [[ -n "${RENAME_MAP}" ]]; then
+    ARGS+=("--rename_map=${RENAME_MAP}")
 fi
 
 echo "Starting SmolVLA fine-tuning"

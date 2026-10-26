@@ -112,6 +112,7 @@ def main():
         type=positive_int,
         default=24,
     )
+    parser.add_argument("--rename-map", default=None, help="JSON rename map for camera keys, e.g. '{\"observation.images.front\": \"observation.images.camera1\"}'")
     parser.add_argument("--dry-run", action="store_true")
 
     args = parser.parse_args()
@@ -174,6 +175,9 @@ def main():
 
     if args.hf_policy_repo:
         environment["HF_POLICY_REPO"] = args.hf_policy_repo
+
+    if args.rename_map:
+        environment["RENAME_MAP"] = args.rename_map
 
     if args.model_type == "groot":
         environment["EMBODIMENT_TAG"] = (
