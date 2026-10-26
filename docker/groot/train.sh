@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Configurable GR00T training parameters
 DATASET_REPO_ID="${DATASET_REPO_ID:?DATASET_REPO_ID is required}"
 BASE_MODEL="${BASE_MODEL:-nvidia/GR00T-N1.7-3B}"
 EMBODIMENT_TAG="${EMBODIMENT_TAG:-new_embodiment}"
@@ -17,7 +16,6 @@ if [[ -n "${HF_TOKEN}" ]]; then
     export HUGGING_FACE_HUB_TOKEN="${HF_TOKEN}"
 fi
 
-# Training arguments
 ARGS=(
   --policy.type=groot
   "--policy.base_model_path=${BASE_MODEL}"
@@ -27,7 +25,7 @@ ARGS=(
   "--steps=${STEPS}"
   "--batch_size=${BATCH_SIZE}"
   "--save_freq=${SAVE_FREQ}"
-  "--save_checkpoint_to_hub=${PUSH_TO_HUB}"
+  "--save_checkpoint_to_hub=false"
 )
 
 if [[ -n "${HF_POLICY_REPO}" ]]; then
@@ -45,5 +43,41 @@ mkdir -p "$(dirname "${OUTPUT_DIR}")" /opt/ml/model
 
 lerobot-train "${ARGS[@]}"
 
-# Package training results for SageMaker's final model artifact.
 cp -a "${OUTPUT_DIR}/." /opt/ml/model/
+
+if [[ -n "${HF_POLICY_REPO}" && "${PUSH_TO_HUB}" == "true" ]]; then
+    echo "Pushing all checkpoints to HuggingFace: ${HF_POLICY_REPO}"
+    python3 << EOF
+import os, glob, sys
+from huggingface_hub import HfApi
+
+api = HfApi()
+output_dir = "${OUTPUT_DIR}"
+hf_policy_repo = "${HF_POLICY_REPO}"
+token = os.environ.get("HUGGING_FACE_HUB_TOKEN", "")
+
+checkpoint_dirs = sorted(glob.glob(f"{output_dir}/checkpoints/*/pretrained_model"))
+if not checkpoint_dirs:
+    print("No checkpoints found to push")
+    sys.exit(0)
+
+for ckpt_dir in checkpoint_dirs:
+    step = ckpt_dir.split("/")[-2]
+    if step == "last":
+        continue
+    print(f"Pushing checkpoint {step}")
+    api.upload_folder(
+        folder_path=ckpt_dir,
+        repo_id=hf_policy_repo,
+        path_in_repo=".",
+        repo_type="model",
+        token=token,
+        revision=step,
+        commit_message=f"checkpoint step {int(step)}",
+        create_pr=False,
+    )
+    print(f"Done: branch {step}")
+EOF
+fi
+
+echo "GR00T training completed."
