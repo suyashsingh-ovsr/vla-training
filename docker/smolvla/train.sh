@@ -19,6 +19,7 @@ fi
 
 ARGS=(
     "--policy.path=${BASE_MODEL}"
+    "--policy.input_features=null"
     "--dataset.repo_id=${DATASET_REPO_ID}"
     "--output_dir=${OUTPUT_DIR}"
     "--steps=${STEPS}"
