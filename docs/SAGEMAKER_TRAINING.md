@@ -128,7 +128,7 @@ docker build -f docker/groot/Dockerfile -t robotics-groot:v1 .
 **SmolVLA:**
 
 ```bash
-docker build -f docker/smolvla/Dockerfile -t robotics-smolvla:v1 .
+docker build -f docker/smolvla/Dockerfile -t robotics-smolvla:v5 .
 ```
 
 Only build the model you intend to use. Building may download several GB and take a long time. If a build fails, diagnose the specific failed layer before uploading or launching anything.
@@ -163,8 +163,8 @@ docker push "$REGISTRY/robotics-groot:v1"
 aws ecr describe-repositories --repository-names robotics-smolvla --profile "$PROFILE" --region "$REGION" \
   || aws ecr create-repository --repository-name robotics-smolvla --profile "$PROFILE" --region "$REGION"
 
-docker tag robotics-smolvla:v1 "$REGISTRY/robotics-smolvla:v1"
-docker push "$REGISTRY/robotics-smolvla:v1"
+docker tag robotics-smolvla:v5 "$REGISTRY/robotics-smolvla:v5"
+docker push "$REGISTRY/robotics-smolvla:v5"
 ```
 
 If your organization already maintains approved ECR repositories, use those and pass their full image URI through `--ecr-image` instead of creating new repositories.
@@ -212,13 +212,19 @@ AWS_PROFILE=datascience .venv/bin/python scripts/jobs/sagemaker/launch_training.
   --steps 10000 \
   --batch-size 2 \
   --save-freq 5000 \
-  --image-tag v4 \
+  --image-tag v5 \
   --dry-run
 ```
 
 If `--dataset-repo-id`, `--hf-token`, or `--hf-policy-repo` are omitted, the launcher will prompt for them interactively. The token prompt uses silent input (no echo). You can also pre-set the token as the `HF_TOKEN` environment variable.
 
-Always use the latest image tag. Current versions: GR00T `v1`, SmolVLA `v4`. When a new Docker image is built and pushed, increment the tag (v5, v6, etc.) and update `--image-tag` accordingly.
+> **⚠️ IMPORTANT — Always use the latest image tag.**
+> Before launching any training job, check the current tags in ECR:
+> ```bash
+> aws ecr list-images --repository-name robotics-smolvla --profile "$PROFILE" --region "$REGION" --query 'imageIds[*].imageTag' --output text
+> aws ecr list-images --repository-name robotics-groot --profile "$PROFILE" --region "$REGION" --query 'imageIds[*].imageTag' --output text
+> ```
+> **Use the highest version tag listed.** Current versions: GR00T `v1`, SmolVLA `v5`. When a new Docker image is built and pushed, increment the tag (v6, v7, …) and update `--image-tag` in your command.
 
 If using a different approved ECR image, add `--ecr-image FULL_ECR_URI`. For a different AWS account or role, add `--aws-account-id`, `--role-arn`, `--aws-profile`, `--aws-region`, and `--s3-bucket` as required.
 
@@ -260,7 +266,7 @@ AWS_PROFILE=datascience .venv/bin/python scripts/jobs/sagemaker/launch_training.
   --steps 10000 \
   --batch-size 2 \
   --save-freq 5000 \
-  --image-tag v4
+  --image-tag v5
 ```
 
 The launcher prints the job name and ARN after AWS accepts the request. **Submitting a job does not mean training has succeeded.** Inspect SageMaker job status and CloudWatch logs, and review errors if the container exits.
