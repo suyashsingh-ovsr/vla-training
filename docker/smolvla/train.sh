@@ -69,6 +69,7 @@ for ckpt_dir in checkpoint_dirs:
     if step == "last":
         continue
     print(f"Pushing checkpoint {step}")
+    api.create_branch(repo_id=hf_policy_repo, branch=step, repo_type="model", token=token, exist_ok=True)
     api.upload_folder(
         folder_path=ckpt_dir,
         repo_id=hf_policy_repo,
