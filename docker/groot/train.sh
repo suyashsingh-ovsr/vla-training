@@ -46,54 +46,69 @@ lerobot-train "${ARGS[@]}"
 cp -a "${OUTPUT_DIR}/." /opt/ml/model/
 
 if [[ -n "${HF_POLICY_REPO}" && "${PUSH_TO_HUB}" == "true" ]]; then
-    echo "Pushing all checkpoints to HuggingFace: ${HF_POLICY_REPO}"
-    python3 << EOF
-import os, glob, sys
+    echo "Pushing complete checkpoints to Hugging Face: ${HF_POLICY_REPO}"
+
+    export OUTPUT_DIR HF_POLICY_REPO
+
+    python3 <<'PY'
+import os
+from pathlib import Path
 from huggingface_hub import HfApi
 
 api = HfApi()
-output_dir = "${OUTPUT_DIR}"
-hf_policy_repo = "${HF_POLICY_REPO}"
-token = os.environ.get("HUGGING_FACE_HUB_TOKEN", "")
+output_dir = Path(os.environ["OUTPUT_DIR"])
+hf_policy_repo = os.environ["HF_POLICY_REPO"]
+token = os.environ.get("HUGGING_FACE_HUB_TOKEN") or None
+checkpoints_dir = output_dir / "checkpoints"
 
-checkpoint_dirs = sorted(glob.glob(f"{output_dir}/checkpoints/*/pretrained_model"))
-if not checkpoint_dirs:
-    print("No checkpoints found to push")
-    sys.exit(0)
+if not checkpoints_dir.is_dir():
+    raise RuntimeError(f"Checkpoint directory not found: {checkpoints_dir}")
 
-numbered_dirs = [d for d in checkpoint_dirs if d.split("/")[-2] != "last"]
-for ckpt_dir in numbered_dirs:
-    step = ckpt_dir.split("/")[-2]
-    print(f"Pushing checkpoint {step}")
-    api.create_branch(repo_id=hf_policy_repo, branch=step, repo_type="model", token=token, exist_ok=True)
-    api.upload_folder(
-        folder_path=ckpt_dir,
-        repo_id=hf_policy_repo,
-        path_in_repo=".",
-        repo_type="model",
-        token=token,
-        revision=step,
-        commit_message=f"checkpoint step {int(step)}",
-        create_pr=False,
+numbered_dirs = sorted(
+    (p for p in checkpoints_dir.iterdir() if p.is_dir() and p.name.isdigit()),
+    key=lambda p: int(p.name),
+)
+if not numbered_dirs:
+    raise RuntimeError(f"No numbered checkpoints found in {checkpoints_dir}")
+
+for folder in numbered_dirs:
+    weights = folder / "pretrained_model" / "model.safetensors"
+    state = folder / "training_state"
+    if not weights.is_file() or weights.stat().st_size == 0:
+        raise RuntimeError(f"Missing or empty model weights: {weights}")
+    if not state.is_dir() or not any(state.iterdir()):
+        raise RuntimeError(f"Missing or empty training state: {state}")
+
+api.create_repo(repo_id=hf_policy_repo, repo_type="model", token=token, exist_ok=True)
+
+for folder in numbered_dirs:
+    step = folder.name
+    print(f"Pushing complete checkpoint {step}", flush=True)
+    api.create_branch(
+        repo_id=hf_policy_repo, branch=step, repo_type="model",
+        token=token, exist_ok=True,
     )
-    print(f"Done: branch {step}")
-
-if numbered_dirs:
-    final_ckpt = numbered_dirs[-1]
-    final_step = final_ckpt.split("/")[-2]
-    print(f"Pushing final model (step {int(final_step)}) to main")
     api.upload_folder(
-        folder_path=final_ckpt,
-        repo_id=hf_policy_repo,
-        path_in_repo=".",
-        repo_type="model",
-        token=token,
-        revision="main",
-        commit_message=f"final model ({int(final_step)} steps)",
-        create_pr=False,
+        folder_path=str(folder), repo_id=hf_policy_repo,
+        path_in_repo=f"checkpoints/{step}", repo_type="model",
+        token=token, revision=step,
+        ignore_patterns=["*.sagemaker-uploaded"],
+        commit_message=f"Complete checkpoint {step}", create_pr=False,
     )
-    print("Done: main branch updated with final model")
-EOF
+    print(f"Done: branch {step}", flush=True)
+
+final_folder = numbered_dirs[-1]
+final_step = final_folder.name
+print(f"Pushing final model (step {int(final_step)}) to main", flush=True)
+api.upload_folder(
+    folder_path=str(final_folder / "pretrained_model"),
+    repo_id=hf_policy_repo, path_in_repo=".", repo_type="model",
+    token=token, revision="main",
+    ignore_patterns=["*.sagemaker-uploaded"],
+    commit_message=f"final model ({int(final_step)} steps)", create_pr=False,
+)
+print("Done: main branch updated with final model", flush=True)
+PY
 fi
 
 echo "GR00T training completed."
