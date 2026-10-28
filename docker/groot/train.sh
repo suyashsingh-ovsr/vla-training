@@ -61,10 +61,9 @@ if not checkpoint_dirs:
     print("No checkpoints found to push")
     sys.exit(0)
 
-for ckpt_dir in checkpoint_dirs:
+numbered_dirs = [d for d in checkpoint_dirs if d.split("/")[-2] != "last"]
+for ckpt_dir in numbered_dirs:
     step = ckpt_dir.split("/")[-2]
-    if step == "last":
-        continue
     print(f"Pushing checkpoint {step}")
     api.create_branch(repo_id=hf_policy_repo, branch=step, repo_type="model", token=token, exist_ok=True)
     api.upload_folder(
@@ -78,6 +77,22 @@ for ckpt_dir in checkpoint_dirs:
         create_pr=False,
     )
     print(f"Done: branch {step}")
+
+if numbered_dirs:
+    final_ckpt = numbered_dirs[-1]
+    final_step = final_ckpt.split("/")[-2]
+    print(f"Pushing final model (step {int(final_step)}) to main")
+    api.upload_folder(
+        folder_path=final_ckpt,
+        repo_id=hf_policy_repo,
+        path_in_repo=".",
+        repo_type="model",
+        token=token,
+        revision="main",
+        commit_message=f"final model ({int(final_step)} steps)",
+        create_pr=False,
+    )
+    print("Done: main branch updated with final model")
 EOF
 fi
 
