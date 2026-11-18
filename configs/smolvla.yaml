@@ -2,7 +2,15 @@ model_type: smolvla
 base_model: lerobot/smolvla_base
 dockerfile: docker/smolvla/Dockerfile
 ecr_repository: robotics-smolvla
-instance_type: ml.g5.xlarge
-steps: 10000
-batch_size: 2
-save_freq: 2000
+
+# pick one instance type based on your training needs (region: eu-north-1)
+# ml.g5.xlarge        - SmolVLA training
+# ml.p4d.24xlarge     - NVIDIA GR00T training
+# ml.p5.48xlarge      - large-scale NVIDIA GR00T training
+
+instance_type:
+
+# fill in the hyperparameters you want
+steps:        # e.g. 10000
+batch_size:   # e.g. 16 (lower if OOM)
+save_freq:    # e.g. 2000 (checkpoint every N steps)

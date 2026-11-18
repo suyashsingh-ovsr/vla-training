@@ -49,7 +49,6 @@ All example account settings below reflect the project's current environment. Co
 ## 3. Clone and install launcher dependencies
 
 ```bash
-git clone git@github.com:suyashsingh-ovsr/vla-training.git
 cd vla-training
 
 # The launcher runs on your computer; the model runs in the Docker container on SageMaker.
@@ -86,9 +85,9 @@ You can edit these defaults in your own branch, **or override them per job** wit
 | `--dataset-repo-id` | HuggingFace dataset repository (prompted if omitted) | `ORG/ROBOT_DATASET` |
 | `--hf-token` | HuggingFace token for private or gated access (prompted if omitted) | `hf_...` |
 | `--base-model` | Starting pretrained policy | `nvidia/GR00T-N1.7-3B` |
-| `--steps` | Training update steps | `10000` |
-| `--batch-size` | Training batch size | `2` |
-| `--save-freq` | Checkpoint interval in steps | `2000` |
+| `--steps` | Training update steps | `10000` (see config for examples) |
+| `--batch-size` | Training batch size | `16` (see config for examples) |
+| `--save-freq` | Checkpoint interval in steps | `2000` (see config for examples) |
 | `--instance-type` | SageMaker training GPU instance | `ml.g6e.xlarge` |
 | `--embodiment-tag` | GR00T embodiment tag | `new_embodiment` |
 | `--hf-policy-repo` | Policy repository identifier | `ORG/MODEL_NAME` |
@@ -194,9 +193,9 @@ AWS_PROFILE=datascience .venv/bin/python scripts/jobs/sagemaker/launch_training.
   --dataset-repo-id ORG/GROOT_DATASET \
   --hf-token hf_YOUR_TOKEN \
   --hf-policy-repo ORG/MODEL_NAME \
-  --steps 10000 \
-  --batch-size 2 \
-  --save-freq 5000 \
+  --steps YOUR_STEPS \
+  --batch-size YOUR_BATCH_SIZE \
+  --save-freq YOUR_SAVE_FREQ \
   --image-tag v1 \
   --dry-run
 ```
@@ -209,9 +208,9 @@ AWS_PROFILE=datascience .venv/bin/python scripts/jobs/sagemaker/launch_training.
   --dataset-repo-id ORG/SMOLVLA_DATASET \
   --hf-token hf_YOUR_TOKEN \
   --hf-policy-repo ORG/MODEL_NAME \
-  --steps 10000 \
-  --batch-size 2 \
-  --save-freq 5000 \
+  --steps YOUR_STEPS \
+  --batch-size YOUR_BATCH_SIZE \
+  --save-freq YOUR_SAVE_FREQ \
   --image-tag v5 \
   --dry-run
 ```
@@ -249,9 +248,9 @@ AWS_PROFILE=datascience .venv/bin/python scripts/jobs/sagemaker/launch_training.
   --dataset-repo-id ORG/GROOT_DATASET \
   --hf-token hf_YOUR_TOKEN \
   --hf-policy-repo ORG/MODEL_NAME \
-  --steps 10000 \
-  --batch-size 2 \
-  --save-freq 5000 \
+  --steps YOUR_STEPS \
+  --batch-size YOUR_BATCH_SIZE \
+  --save-freq YOUR_SAVE_FREQ \
   --image-tag v1
 ```
 
@@ -263,9 +262,9 @@ AWS_PROFILE=datascience .venv/bin/python scripts/jobs/sagemaker/launch_training.
   --dataset-repo-id ORG/SMOLVLA_DATASET \
   --hf-token hf_YOUR_TOKEN \
   --hf-policy-repo ORG/MODEL_NAME \
-  --steps 10000 \
-  --batch-size 2 \
-  --save-freq 5000 \
+  --steps YOUR_STEPS \
+  --batch-size YOUR_BATCH_SIZE \
+  --save-freq YOUR_SAVE_FREQ \
   --image-tag v5
 ```
 

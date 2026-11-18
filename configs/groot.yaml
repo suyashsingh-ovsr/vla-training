@@ -2,8 +2,17 @@ model_type: groot
 base_model: nvidia/GR00T-N1.7-3B
 dockerfile: docker/groot/Dockerfile
 ecr_repository: robotics-groot
-instance_type: ml.g6e.xlarge
-steps: 20000
-batch_size: 2
-save_freq: 5000
+
+# pick one instance type based on your training needs (region: eu-north-1)
+# ml.g5.xlarge        - SmolVLA training
+# ml.p4d.24xlarge     - NVIDIA GR00T training
+# ml.p5.48xlarge      - large-scale NVIDIA GR00T training
+
+instance_type:
+
+# fill in the hyperparameters you want
+steps:        # e.g. 10000
+batch_size:   # e.g. 16 (lower if OOM)
+save_freq:    # e.g. 5000 (checkpoint every N steps)
+
 embodiment_tag: new_embodiment
