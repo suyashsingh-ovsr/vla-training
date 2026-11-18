@@ -341,4 +341,4 @@ The launcher passes `HF_TOKEN` as an environment variable to the SageMaker train
 - For new models, add a Dockerfile, entrypoint, model config, and an explicit compatibility test.
 - Before declaring the workflow production-ready, perform both image builds, a compatible-data smoke test, and at least one end-to-end SageMaker run for each model.
 
-**Security and ownership:** Access to this repository, company source code, dataset repositories, and AWS resources must be authorized by the organization, even when the GitHub repository is private.
+**Security and ownership:** Access to this repository, company source code, dataset repositories, and AWS resources must be authorized by the organization.
